@@ -1,0 +1,7 @@
+pip install opencv-python
+pip install Flask
+pip install numpy
+pip install socketio
+pip install Flask-SocketIO
+pip install eventlet
+pip install waitress
