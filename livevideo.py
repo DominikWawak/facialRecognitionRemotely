@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import face_recognition
 import os
+import math
 
 app = Flask(__name__)
 socketioApp = SocketIO(app)
@@ -23,6 +24,18 @@ for cl in myList:
     classNames.append(os.path.splitext(cl)[0]) # get name only
 
 
+
+
+#https://github.com/ageitgey/face_recognition/wiki/Calculating-Accuracy-as-a-Percentage
+def face_distance_to_conf(face_distance, face_match_threshold=0.6):
+    if face_distance > face_match_threshold:
+        range = (1.0 - face_match_threshold)
+        linear_val = (1.0 - face_distance) / (range * 2.0)
+        return linear_val
+    else:
+        range = face_match_threshold
+        linear_val = 1.0 - (face_distance / (range * 2.0))
+        return linear_val + ((1.0 - linear_val) * math.pow((linear_val - 0.5) * 2, 0.2))
 
 
 def findEncodings(images):
@@ -49,7 +62,10 @@ def gen_frames():
 
         
         success,img=cap.read()
-        imgS=cv2.resize(img,(0,0),None,0.25,0.25)
+        try: 
+            imgS=cv2.resize(img,(0,0),None,0.25,0.25)
+        except:
+            break
         imgS= cv2.cvtColor(imgS,cv2.COLOR_BGR2RGB)
         facesInCurrentFrame = face_recognition.face_locations(imgS) #multiple faces
         encodingsCurrentFrame=face_recognition.face_encodings(imgS,facesInCurrentFrame)
@@ -57,17 +73,19 @@ def gen_frames():
         for encodeFace,faceLocation in zip(encodingsCurrentFrame,facesInCurrentFrame):
             matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
             faceDist = face_recognition.face_distance(encodeListKnown,encodeFace)
-            print(faceDist)
+            # print(faceDist)
+            
             matchIndex=np.argmin(faceDist)
 
             if matches[matchIndex]:
                 name=classNames[matchIndex].upper()
                 print(name)
+                matchPerc= round(face_distance_to_conf(faceDist[matchIndex])*100)
                 y1,x2,y2,x1=faceLocation
                 y1,x2,y2,x1=y1*4,x2*4,y2*4,x1*4
                 cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
                 cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
-                cv2.putText(img,name,(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+                cv2.putText(img,name+" "+ str(matchPerc)+"%",(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
             
         ret, buffer = cv2.imencode('.jpg', img)
         img = buffer.tobytes()
