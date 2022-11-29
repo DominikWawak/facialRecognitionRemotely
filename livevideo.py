@@ -12,12 +12,13 @@ app = Flask(__name__)
 socketioApp = SocketIO(app)
 
 
+# create images array and names
 path="faceImages"
 images=[]
 classNames=[]
 myList = os.listdir(path)
 
-
+# Look ath the path and append the images and names to the arrays
 for cl in myList:
     curImg=cv2.imread(f'{path}/{cl}')
     images.append(curImg)
@@ -26,7 +27,9 @@ for cl in myList:
 
 
 
-#https://github.com/ageitgey/face_recognition/wiki/Calculating-Accuracy-as-a-Percentage
+# taken from https://github.com/ageitgey/face_recognition/wiki/Calculating-Accuracy-as-a-Percentage
+
+# this function takes the non linear value of the face distance and maps it to a percentage value.
 def face_distance_to_conf(face_distance, face_match_threshold=0.6):
     if face_distance > face_match_threshold:
         range = (1.0 - face_match_threshold)
@@ -38,6 +41,7 @@ def face_distance_to_conf(face_distance, face_match_threshold=0.6):
         return linear_val + ((1.0 - linear_val) * math.pow((linear_val - 0.5) * 2, 0.2))
 
 
+# Function that returns a array of encodings for each image.
 def findEncodings(images):
     encodeList =[]
     for img in images:
@@ -51,35 +55,36 @@ def findEncodings(images):
 encodeListKnown= findEncodings(images)
 print("encoding complete!")
 
-
+# video capture 
 cap = cv2.VideoCapture(0)
 
 def gen_frames():
    
     while True:
 
-        #cv2.imshow('img',img) #display image
-
-        
+        # Trying to resize the image to make the maths easier and faster for the facial recognition algotithm.
         success,img=cap.read()
         try: 
             imgS=cv2.resize(img,(0,0),None,0.25,0.25)
         except:
             break
+        
+        # image changes to RGb for the face_recognition library
         imgS= cv2.cvtColor(imgS,cv2.COLOR_BGR2RGB)
         facesInCurrentFrame = face_recognition.face_locations(imgS) #multiple faces
         encodingsCurrentFrame=face_recognition.face_encodings(imgS,facesInCurrentFrame)
 
+        # Loop through the face encodings and compare them
         for encodeFace,faceLocation in zip(encodingsCurrentFrame,facesInCurrentFrame):
             matches = face_recognition.compare_faces(encodeListKnown,encodeFace)
             faceDist = face_recognition.face_distance(encodeListKnown,encodeFace)
             # print(faceDist)
-            
+            # Match index is set to the lowest distance that is the most accurate.
             matchIndex=np.argmin(faceDist)
-
+            # Check it index exists
             if matches[matchIndex]:
                 name=classNames[matchIndex].upper()
-                print(name)
+                # print(name)
                 matchPerc= round(face_distance_to_conf(faceDist[matchIndex])*100)
                 y1,x2,y2,x1=faceLocation
                 y1,x2,y2,x1=y1*4,x2*4,y2*4,x1*4

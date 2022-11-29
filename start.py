@@ -3,10 +3,10 @@ import numpy as np
 import face_recognition
 
 
-imgWill= face_recognition.load_image_file("WillSmith.jpg")
+imgWill= face_recognition.load_image_file("faceImages/WillSmith.jpg")
 imgWill = cv2.cvtColor(imgWill,cv2.COLOR_BGR2RGB)
 
-imgWillTest= face_recognition.load_image_file("WillSmith2.jpg")
+imgWillTest= face_recognition.load_image_file("faceImages/WillSmith2.jpg")
 imgWillTest =cv2.cvtColor(imgWillTest,cv2.COLOR_BGR2RGB)
 
 
