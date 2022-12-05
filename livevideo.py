@@ -8,6 +8,7 @@ import face_recognition
 import os
 import math
 
+
 app = Flask(__name__)
 socketioApp = SocketIO(app)
 
@@ -64,11 +65,11 @@ def gen_frames():
 
         # Trying to resize the image to make the maths easier and faster for the facial recognition algotithm.
         success,img=cap.read()
-        try: 
-            imgS=cv2.resize(img,(0,0),None,0.25,0.25)
-        except:
-            break
-        
+        # try: 
+        #     imgS=cv2.resize(img,(0,0),None,0.25,0.25)
+        # except:
+        #     break
+        imgS=cv2.resize(img,(0,0),None,0.25,0.25)
         # image changes to RGb for the face_recognition library
         imgS= cv2.cvtColor(imgS,cv2.COLOR_BGR2RGB)
         facesInCurrentFrame = face_recognition.face_locations(imgS) #multiple faces
@@ -91,6 +92,13 @@ def gen_frames():
                 cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
                 cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
                 cv2.putText(img,name+" "+ str(matchPerc)+"%",(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+            else:
+                y1,x2,y2,x1=faceLocation
+                y1,x2,y2,x1=y1*4,x2*4,y2*4,x1*4
+                cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
+                cv2.rectangle(img,(x1,y2-35),(x2,y2),(0,255,0),cv2.FILLED)
+                cv2.putText(img,"Unknown",(x1+6,y2-6),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+
             
         ret, buffer = cv2.imencode('.jpg', img)
         img = buffer.tobytes()
